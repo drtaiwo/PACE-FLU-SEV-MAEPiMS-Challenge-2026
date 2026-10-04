@@ -1,0 +1,12 @@
+check,value
+weekly_wide_rows,1656
+weekly_long_rows,11592
+missing_count_quantiles,0
+negative_count_quantiles,0
+quantile_ordering,TRUE
+complete_forecast_weeks,TRUE
+complete_outcomes,TRUE
+number_states,37
+number_zones,6
+number_macro_regions,2
+all_models_converged,TRUE

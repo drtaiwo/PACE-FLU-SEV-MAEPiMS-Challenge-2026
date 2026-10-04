@@ -1,0 +1,2 @@
+model,season,origin_week,first_forecast_week,last_forecast_week,forecast_horizon_weeks,posterior_trajectories,number_states,total_population,growth_scale,estimable_connectivity_edges,positive_connectivity_edges,fallback_targets,note
+PACE-FLU-SEV,2025/2026,40,41,52,12,2000,37,229501935,0.7298970834523254,1332,835,0,Observed through week 40; recursive forecast weeks 41-52. Seasonal peak/attack-rate targets combine observed weeks 1-40 with simulated weeks 41-52.
