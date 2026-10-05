@@ -5805,6 +5805,321 @@ cat(
   "\n"
 )
 
+
+
+
+# =============================================================================
+# 3. FIGURE 3
+#    NORTH VERSUS SOUTH WEEKLY CASE FORECASTS
+# =============================================================================
+
+north_south_file <- file.path(
+  output_dir,
+  "04_NORTH_SOUTH_WEEKLY_FORECASTS.csv"
+)
+
+north_south <- read_csv(
+  north_south_file,
+  show_col_types = FALSE
+)
+
+
+# -----------------------------------------------------------------------------
+# Inspect the data
+# -----------------------------------------------------------------------------
+
+print(names(north_south))
+print(head(north_south))
+
+
+# -----------------------------------------------------------------------------
+# Keep North and South and arrange by week
+# -----------------------------------------------------------------------------
+
+north_south_plot_data <- north_south %>%
+  filter(
+    location %in% c(
+      "North",
+      "South"
+    )
+  ) %>%
+  arrange(
+    location,
+    week
+  )
+
+
+# -----------------------------------------------------------------------------
+# Plot
+# -----------------------------------------------------------------------------
+
+fig_3 <- ggplot(
+  north_south_plot_data,
+  aes(
+    x = week,
+    y = q50,
+    group = location
+  )
+) +
+  
+  # 90% posterior predictive interval
+  geom_ribbon(
+    aes(
+      ymin = q05,
+      ymax = q95,
+      fill = location
+    ),
+    alpha = 0.18,
+    colour = NA
+  ) +
+  
+  # Posterior median forecast
+  geom_line(
+    aes(
+      colour = location
+    ),
+    linewidth = 1.1
+  ) +
+  
+  geom_point(
+    aes(
+      colour = location
+    ),
+    size = 2
+  ) +
+  
+  # Observed values for retrospective comparison
+  geom_line(
+    aes(
+      y = actual,
+      colour = location
+    ),
+    linewidth = 0.9,
+    linetype = "dashed"
+  ) +
+  
+  # Forecast origin
+  geom_vline(
+    xintercept = 40,
+    linetype = "dotted",
+    linewidth = 0.7
+  ) +
+  
+  scale_x_continuous(
+    breaks = seq(
+      min(north_south_plot_data$week),
+      max(north_south_plot_data$week),
+      by = 1
+    )
+  ) +
+  
+  labs(
+    title = "North-South Case Forecasts from the Week-40 Origin",
+    subtitle = paste0(
+      "Solid lines: posterior median; ",
+      "shaded regions: 90% predictive intervals; ",
+      "dashed lines: observed values"
+    ),
+    x = "Epidemiological week",
+    y = "Weekly cases",
+    colour = "Region",
+    fill = "Region"
+  ) +
+  
+  theme_minimal(
+    base_size = 12
+  ) +
+  
+  theme(
+    plot.title = element_text(
+      face = "bold"
+    ),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
+  )
+
+
+# Display figure
+print(fig_3)
+
+
+# -----------------------------------------------------------------------------
+# Save Figure 3
+# -----------------------------------------------------------------------------
+
+ggsave(
+  filename = file.path(
+    figure_dir,
+    "Figure_3_North_South_Forecast.png"
+  ),
+  plot = fig_3,
+  width = 9,
+  height = 5.5,
+  dpi = 300
+)
+
+
+# =============================================================================
+# 4. FIGURE 4
+#    STATE-LEVEL MEDIAN CASE FORECAST HEATMAP
+# =============================================================================
+
+state_file <- file.path(
+  output_dir,
+  "02_STATE_WEEKLY_FORECASTS.csv"
+)
+
+state_forecasts <- read_csv(
+  state_file,
+  show_col_types = FALSE
+)
+
+
+# -----------------------------------------------------------------------------
+# Inspect
+# -----------------------------------------------------------------------------
+
+print(names(state_forecasts))
+print(head(state_forecasts))
+
+
+# -----------------------------------------------------------------------------
+# Prepare data
+# -----------------------------------------------------------------------------
+
+state_heatmap_data <- state_forecasts %>%
+  filter(
+    week >= 41,
+    week <= 52
+  ) %>%
+  mutate(
+    state = as.character(state),
+    zone = as.character(zone),
+    macro_region = as.character(macro_region)
+  )
+
+
+# -----------------------------------------------------------------------------
+# Order states geographically rather than alphabetically
+#
+# States are arranged first by North/South, then geopolitical zone,
+# then state name.
+# -----------------------------------------------------------------------------
+
+state_order <- state_heatmap_data %>%
+  distinct(
+    state,
+    macro_region,
+    zone
+  ) %>%
+  arrange(
+    macro_region,
+    zone,
+    state
+  ) %>%
+  pull(state)
+
+
+state_heatmap_data <- state_heatmap_data %>%
+  mutate(
+    state = factor(
+      state,
+      levels = rev(state_order)
+    )
+  )
+
+
+# -----------------------------------------------------------------------------
+# Plot heatmap
+# -----------------------------------------------------------------------------
+
+fig_4 <- ggplot(
+  state_heatmap_data,
+  aes(
+    x = factor(week),
+    y = state,
+    fill = q50
+  )
+) +
+  
+  geom_tile(
+    colour = "white",
+    linewidth = 0.15
+  ) +
+  
+  labs(
+    title = "State-Level Median Case Forecasts, Weeks 41-52",
+    subtitle = "Week-40 production forecast",
+    x = "Forecast week",
+    y = "State / FCT",
+    fill = "Median\nweekly cases"
+  ) +
+  
+  scale_fill_viridis_c(
+    option = "C"
+  ) +
+  
+  theme_minimal(
+    base_size = 11
+  ) +
+  
+  theme(
+    plot.title = element_text(
+      face = "bold"
+    ),
+    axis.text.y = element_text(
+      size = 7
+    ),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
+
+
+# Display figure
+print(fig_4)
+
+
+# -----------------------------------------------------------------------------
+# Save Figure 4
+# -----------------------------------------------------------------------------
+
+ggsave(
+  filename = file.path(
+    figure_dir,
+    "Figure_4_State_Forecast_Heatmap.png"
+  ),
+  plot = fig_4,
+  width = 9,
+  height = 10,
+  dpi = 300
+)
+
+
+# =============================================================================
+# 5. CONFIRM OUTPUTS
+# =============================================================================
+
+cat(
+  "\n============================================================\n",
+  "PACE-FLU-SEV VISUALIZATIONS COMPLETED\n",
+  "============================================================\n",
+  "\nFigure 3:\n",
+  file.path(
+    figure_dir,
+    "Figure_3_North_South_Forecast.png"
+  ),
+  "\n\nFigure 4:\n",
+  file.path(
+    figure_dir,
+    "Figure_4_State_Forecast_Heatmap.png"
+  ),
+  "\n============================================================\n"
+)
+
+
+
+
+
 cat("\n============================================================\n")
 cat("END OF FINAL PACE-FLU-SEV SUBMISSION PIPELINE\n")
 cat("============================================================\n")
